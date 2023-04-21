@@ -1,0 +1,41 @@
+{% extends "./Layouts/mainlayout.njk" %}
+{% block body %}
+<div id="msg_board" class="py-2 px-2" style="height:90vh;overflow:auto"></div>
+<div class="input-group mb-3 fixed-bottom">
+  <input id="input_msg" type="text" class="form-control" placeholder="Message">
+  <div class="input-group-append">
+    <button onclick="sendMessage()" style="border-radius:0px" class="btn btn-primary" type="button">Send</button>
+  </div>
+</div>
+<script>
+  let msg_board = document.getElementById("msg_board");
+  let input_msg = document.getElementById("input_msg");
+  let socket = io();
+  let id = localStorage.getItem("id") ?? Math.random().toString(36).substring(2, 12);
+  if(localStorage.getItem("id") == undefined) localStorage.setItem("id",id);
+  socket.emit("connected",id);
+  function sendMessage(){
+    if(input_msg.value == "") return;
+        let msgElement = `<div class="card py-0 my-1 text-white bg-primary" style="width: 18rem; text-align:right;width:100%">
+      <div class="card-body">
+        <h6 class="card-title">${id}</h6>
+        <p class="card-text">${input_msg.value}</p>
+      </div></div>`;
+    msg_board.innerHTML += msgElement;
+    msg_board.scrollTop = msg_board.scrollHeight;
+    socket.emit("chat message",id,input_msg.value);
+    input_msg.value = "";
+  }
+  socket.on("chat message",(rid,msg)=>{
+    let align = id==rid ? 'text-align:right' : 'text-align:left';
+    let bg = id == rid ? "text-white bg-primary" : "";
+    let msgElement = `<div class="card py-0 my-1 ${bg}" style="width: 18rem; ${align};width:100%">
+      <div class="card-body">
+        <h6 class="card-title">${rid}</h6>
+        <p class="card-text">${msg}</p>
+      </div></div>`;
+    msg_board.innerHTML += msgElement;
+    msg_board.scrollTop = msg_board.scrollHeight;
+  })
+</script>
+{% endblock %}
